@@ -1,25 +1,56 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import { commerce } from './lib/commerce';
+import { Products, Navbar, Cart } from './components';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+const App = () => {
+    const [products, setProducts] = useState([]);
+    const [cart, setCart] = useState({});
+
+    const fetchProducts = async () => {
+        const { data } = await commerce.products.list();
+
+        setProducts(data);
+    }
+
+    const fetchCart = async () => {
+        setCart(await commerce.cart.retrieve())
+    }
+
+    const handleAddtoCart = async (productId, quantity) => {
+        const response = await commerce.cart.add(productId, quantity);
+
+        setCart(response.cart)
+    }
+
+    const handleUpdateCartQty = async (productId, quantity) => {
+        const response = await commerce.cart.update(productId, { quantity });
+
+        setCart(response.cart)
+    }
+
+    useEffect(() => {
+        fetchProducts();
+        fetchCart();
+    }, []);
+
+    console.log(cart)
+
+    return (
+        <Router>
+            <div>
+                <Navbar totalItems={cart.total_items} />
+                <Switch>
+                    <Route exact path="/">
+                        <Products products={products} onAddToCart={handleAddtoCart} />
+                    </Route>
+                    <Route exact path="/cart">
+                        <Cart cart={cart} />
+                    </Route>
+                </Switch>
+            </div>
+        </Router>
+    );
 }
 
 export default App;
